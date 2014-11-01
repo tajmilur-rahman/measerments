@@ -1,0 +1,579 @@
+==Summary==
+
+# Google Chromium Projects
+# Total Release: 30
+# Release Version 5.0 to 34.0
+# 1.0 to 4.0 were 13 weeks long-release-cycle versions
+# Rapid-release since 5.0
+# Total Develovers: 1964
+## Devs working for development works: 1936
+## Devs working for stabilizing release: 1012
+## Devs work for both in development and stabilization periods: 984
+# Total Commits: 215366 (total)
+## Commits made in DP: 176783
+## Commits made in stabilization: 38583
+
+
+==Developers==
+* Total developers: 1797
+* Total developers per release: 462.5
+-------------------------------------
+chromium=# select release, count(distinct username) from (select release,username from dev_area_dp union select release, username from dev_area_sp) a group by release;
+
+[dev_total_per_rel.rpt ]
+
+* Total developers work in development period per release: 454
+--------------------------------------------------------------
+select release, count(distinct username) total_developers from dev_area_dp group by release;
+
+[dev_total_per_rel_dp.rpt]
+
+
+* Total developers work for stabilization per release: 175.5
+------------------------------------------------------------
+select release, count(distinct username) total_developers from dev_area_sp group by release;
+
+[dev_total_per_sp.rpt]
+
+Total Dev: 1797
+
+===Common Dev===
+* How many developers work in both development and stabilization periods: 157.5
+-------------------------------------------------------------------------------
+select a.release, count(a.username) from ((select distinct release,username from dev_area_dp) intersect (select distinct release,username from dev_area_sp)) a group by a.release order by release
+
+[dev_common_dpsp.rpt]
+
+===Reworking Own Wowk===
+* During stabilization period how many developers working for their own development work: 309
+---------------------------------------------------------------------------------------------
+select d.release, count(distinct d.username) as devs from dev_area_dp d, dev_area_sp s where d.path = s.path and d.churn>0 and s.churn>0 and d.username=s.username group by d.release order by release;
+
+[dev_reworking.rpt]
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   74.0   206.5   258.5   244.7   287.5   317.0
+
+===Reworking by Others===
+* How many developers get their works reworked by others during stabilization: 380
+----------------------------------------------------------------------------------
+select d.release, count(distinct d.username) as devs from dev_area_dp d, dev_area_sp s where d.path=s.path and d.release=s.release and d.username<>s.username group by d.release;
+
+[dev_reworking_by_others.rpt]
+
+Re-Work Others:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   80.0   242.2   307.0   294.4   356.8   422.0
+
+===No Reworking===
+* How many developers do not require any king of re-work during stabilization: 333.5
+------------------------------------------------------------------------------------
+select d.release, count(distinct username) as devs from dev_area_dp d where d.path not in (select path from dev_area_sp) group by d.release order by release;
+
+[dev_no_rework.rpt ]
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+   20.0   212.5   322.0   312.6   400.5   541.0
+
+** These three groups above are not mutually exclussive because one developer may work in multiple different files, some files may not be touched in stabilization at all some files may accept re-work. So that particular developer may belong to one or more groups above.
+
+==Commits==
+* Number of commits in a release: 5612
+--------------------------------------
+select substring(release from E'^(\\d+\\.\\d+)') as release, count(distinct commit) from git_commit_release  group by substring(release from E'^(\\d+\\.\\d+)');
+
+[commits_per_release.rpt]
+
+    release          count      
+ Min.   : 5.00   Min.   : 1452  
+ 1st Qu.:12.25   1st Qu.: 4372  
+ Median :19.50   Median : 5612  
+ Mean   :19.50   Mean   : 6546  
+ 3rd Qu.:26.75   3rd Qu.: 6571  
+ Max.   :34.00   Max.   :36068  
+
+* Number of commits in DP: 5249
+-------------------------------
+select release, count(distinct commit) as total_commit from dp_commits group by release;
+
+[commits_per_rel_dp.rpt]
+
+    release       total_commit  
+ Min.   : 5.00   Min.   :  295  
+ 1st Qu.:12.25   1st Qu.: 3869  
+ Median :19.50   Median : 5249  
+ Mean   :19.50   Mean   : 5893  
+ 3rd Qu.:26.75   3rd Qu.: 6014  
+ Max.   :34.00   Max.   :34377  
+
+
+* Number of commits in SP: 457.5
+--------------------------------
+select release, count(distinct commit) as total_commit from sp_commits group by release;
+
+[commits_per_rel_sp.rpt]
+
+    release       total_commit   
+ Min.   : 5.00   Min.   : 239.0  
+ 1st Qu.:12.25   1st Qu.: 336.0  
+ Median :19.50   Median : 457.5  
+ Mean   :19.50   Mean   : 633.9  
+ 3rd Qu.:26.75   3rd Qu.: 561.5  
+ Max.   :34.00   Max.   :2439.0 
+
+* Commits per developer in DP in a release: 25 (med) 105 (mean)
+---------------------------------------------------------------
+select release, username, sum(commits) total_commits from dev_area_dp group by release, username order by release;
+
+[commits_per_dev_per_rel_dp.rpt]
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    1.0     6.0    25.0   104.9    77.0 79670.0
+
+* Commits per developer in SP: 6 (med) 36.29 (mean)
+------------------------------------------------
+select release, username, sum(commits) total_commits from dev_area_sp group by release, username order by release;
+
+[commits_per_dev_per_rel_sp.rpt]
+
+    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+    1.00     2.00     6.00    36.29    17.00 22000.0
+
+
+==Churns==
+* Number of churn in a release: 869228 
+---------------------------------------
+select substring(release from E'^(\\d+\\.\\d+)') as release, sum(add+remove) as churn from git_commit_release gcr, git_revision gr where gcr.commit=gr.commit group by substring(release from E'^(\\d+\\.\\d+)') order by release;
+
+[churns_per_rel.rpt]
+
+    release          churn        
+ Min.   : 5.00   Min.   : 192136  
+ 1st Qu.:12.25   1st Qu.: 674607  
+ Median :19.50   Median : 869228  
+ Mean   :19.50   Mean   :1012333  
+ 3rd Qu.:26.75   3rd Qu.:1025060  
+ Max.   :34.00   Max.   :5275467
+
+* Number of churn in DP for a release: 808800
+----------------------------------------------
+select release, sum(churn) sum from dev_area_dp group by release order by release;
+
+[churns_per_rel_dp.rpt]
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  55930  612500  808800  932100  996800 5051000 
+
+* Number of churn in SP for a release: 51640
+---------------------------------------------
+select release, sum(churn) from dev_area_sp group by release order by release;
+
+[churns_per_rel_sp.rpt]
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  17700   29120   51640   77580   75980  315600
+
+[[File:../images/churn_	dpsp_chrome.png|frame|200px]]
+
+
+Bean Plot for DP and SP Churn:
+------------------------------
+beanplot(dpchurn$sum, spchurn$sum, main = "beanplot", col = c("#CAB2D6", "#33A02C"), border = "#CAB2D6", names=c("DP","SP"))
+
+[[File:../images/churn_chrome_lx.png|frame|200px]]
+
+Bean Plot for DP and SP Churn for Chrome and Linux:
+---------------------------------------------------
+beanplot(data.frame(chrome_churn$dp_churn+1,chrome_churn$sp_churn+1), data.frame(lx_churn$dp_churn+1,lx_churn$sp_churn+1), what = c(0,1,1,0), overallline = "median", bw="nrd", side = "both", col = list("black", c("grey", "white")), names = c('Chrome', 'Linux Kernel'), ylab = 'Number of Churn')
+
+===Median churn/commit for each release===
+# DP: 30
+select release, median(ch) as med_ch_per_commit from ( select dc.release,sum(add+remove) as ch from git_revision r, dp_commits dc where dc.commit=r.commit group by dc.commit order by dc.release ) a group by release;
+
+[med_dp_ch_per_commit.rpt]
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  21.00   25.75   30.00   29.80   32.75   38.00
+
+# SP: 14.5
+select release, median(ch) as med_ch_per_commit from ( select sc.release,sum(add+remove) as ch from git_revision r, sp_commits sc where sc.commit=r.commit group by sc.commit order by sc.release ) a group by release;
+
+[med_sp_ch_per_commit.rpt]
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    4.0    10.0    14.5    13.6    17.0    27.0 
+
+==Developers Contribution==
+98 Developers are making more than 80% changes during development and in contrast only 10 developers making 80% changes during stabilization.
+
+Run perl:
+
+	cumulative_contribution_dp.pl
+
+	cumulative_contribution_sp.pl
+
+Run following sql:
+
+	select sum_devs, median(cumul_churn) from cumul_contribution_dp group by sum_devs order by sum_devs;
+
+	select sum_devs, median(cumul_churn) from cumul_contribution_sp group by sum_devs order by sum_devs;
+
+\o cumul_contribution_dp.rpt
+
+select sum_devs, median(cumul_churn) from cumul_contribution_dp group by sum_devs order by sum_devs;
+
+\o cumul_contribution_sp.rpt
+
+select sum_devs, median(cumul_churn) from cumul_contribution_sp group by sum_devs order by sum_devs;
+
+\o
+---------------------------
+
+[[File:../images/cumulative_contribution_chrome_linux.png|frame|200px]]
+
+
+==LAG==
+# DP and SP Length: 41 and 88 days
+----------------------------------
+## Length of Releases:
+
+select release, dp_length, dp_length+round(extract(epoch from release_date-start_date)/86400) as cycle_length from stable_releases;
+
+[[File:../images/release_lengths.png|frame|200px]]
+
+select release, dp_length, sp_length from stable_releases;
+
+    release        dp_length       sp_length     
+ Min.   : 5.00   Min.   : 4.00   Min.   : 56.00  
+ 1st Qu.:12.25   1st Qu.:39.25   1st Qu.: 79.25  
+ Median :19.50   Median :41.00   Median : 88.50  
+ Mean   :19.50   Mean   :44.57   Mean   : 91.70  
+ 3rd Qu.:26.75   3rd Qu.:51.00   3rd Qu.: 98.75  
+ Max.   :34.00   Max.   :75.00   Max.   :149.00
+
+## Median lag for DP commits untill stabilization starts and untill stable release published (dp_lag and dp_lag_rel):
+------------------------------------------------------------------------------------------------------------------
+select substring(gcr.release from E'^(\\d+\\.\\d+)') as release, median(dp_lag) as dp_lag, median(dp_lag_rel) as dp_lag_rel from git_commit_release gcr, dp_commits dc where gcr.commit=dc.commit group by substring(gcr.release from E'^(\\d+\\.\\d+)') order by release;
+* dp_lag: lag time since the date of commit until the stabilization start date
+* dp_lag_rel: lag time since the date of commit until the stable release date
+
+ release | dp_lag | dp_lag_rel 
+ 5.0     |    254 |        160
+ 6.0     |     35 |         98
+ 7.0     |     12 |         68
+ 8.0     |      4 |         92
+ 9.0     |     20 |        100
+ 10.0    |     30 |      179.5
+ 11.0    |     20 |        110
+ 12.0    |     20 |        156
+ 13.0    |     19 |        114
+ 14.0    |     28 |         99
+ 15.0    |     21 |         90
+ 16.0    |     20 |        113
+ 17.0    |     25 |        131
+ 18.0    |     25 |        117
+ 19.0    |     25 |         97
+ 20.0    |     19 |        101
+ 21.0    |     19 |        133
+ 22.0    |     25 |        102
+ 23.0    |     20 |        138
+ 24.0    |     19 |        127
+ 25.0    |     26 |        111
+ 26.0    |     24 |        105
+ 27.0    |     20 |        100
+ 28.0    |     19 |         98
+ 29.0    |     21 |        121
+ 30.0    |     22 |        115
+ 31.0    |     21 |        107
+ 32.0    |     19 |        108
+ 33.0    |     23 |        117
+ 34.0    |     27 |        105
+
+    release          dp_lag        dp_lag_rel   
+ Min.   : 5.00   Min.   : 4.00   Min.   : 68.0  
+ 1st Qu.:12.25   1st Qu.:19.25   1st Qu.:100.2  
+ Median :19.50   Median :21.00   Median :109.0  
+ Mean   :19.50   Mean   :22.10   Mean   :113.8  
+ 3rd Qu.:26.75   3rd Qu.:25.00   3rd Qu.:119.2  
+ Max.   :34.00   Max.   :36.00   Max.   :179.0
+
+## Median lag for SP commits untill next patch update and untill stable release published (sp_lag and sp_lag_rel):
+---------------------------------------------------------------------------------------------------------------
+select substring(gcr.release from E'^(\\d+\\.\\d+)') as release, median(sp_lag) as sp_lag, median(sp_lag_rel) as sp_lag_rel from git_commit_release gcr, sp_commits sc where gcr.commit=sc.commit group by substring(gcr.release from E'^(\\d+\\.\\d+)') order by release;
+* sp_lag: lag time since the date of commit until the next candidate release
+* sp_lag_rel: lag time since the date of commit until the stable release date
+ release |      sp_lag       | sp_lag_rel 
+ 5.0     | 0.548356481481482 |        111
+ 6.0     | 0.339594907407407 |         49
+ 7.0     | 0.491574074074074 |         40
+ 8.0     | 0.261087962962963 |         80
+ 9.0     | 0.176788194444444 |         73
+ 10.0    | 0.199699074074074 |        146
+ 11.0    | 0.268373842592593 |         88
+ 12.0    | 0.263668981481481 |        133
+ 13.0    | 0.238657407407407 |         81
+ 14.0    | 0.189913194444444 |         60
+ 15.0    | 0.252644675925926 |         67
+ 16.0    | 0.268888888888889 |         85
+ 17.0    | 0.203969907407408 |         91
+ 18.0    | 0.191296296296296 |         83
+ 19.0    | 0.237037037037037 |         70
+ 20.0    | 0.317233796296296 |         78
+ 21.0    | 0.225300925925926 |      101.5
+ 22.0    | 0.283032407407407 |         72
+ 23.0    | 0.210914351851852 |        102
+ 24.0    | 0.267986111111111 |        100
+ 25.0    | 0.291116898148149 |         62
+ 26.0    |  0.30666087962963 |         73
+ 27.0    | 0.310347222222222 |         77
+ 28.0    | 0.287384259259259 |         76
+ 29.0    | 0.269861111111111 |         97
+ 30.0    | 0.118206018518519 |         76
+ 31.0    | 0.261967592592593 |         82
+ 32.0    | 0.147951388888889 |         78
+ 33.0    | 0.130306712962963 |         57
+ 34.0    | 0.160422453703704 |       69.5
+
+    release          sp_lag          sp_lag_rel    
+ Min.   : 5.00   Min.   :0.00000   Min.   : 40.00  
+ 1st Qu.:12.25   1st Qu.:0.00000   1st Qu.: 70.50  
+ Median :19.50   Median :0.00000   Median : 78.00  
+ Mean   :19.50   Mean   :0.03333   Mean   : 81.93  
+ 3rd Qu.:26.75   3rd Qu.:0.00000   3rd Qu.: 90.25  
+ Max.   :34.00   Max.   :1.00000   Max.   :146.00
+
+# Bean Plot for Lag:
+
+[[File:../images/lag_dpsp_bean.png|frame|200px]]
+
+
+==Regression==
+Linear modeling with bugs and factors: churn, lag
+
+# Call:
+ lm(formula = log1p(bugs) ~ log1p(commits) + log1p(churn), data = dir_reg)
+
+# Residuals:
+      Min       1Q   Median       3Q      Max 
+ -2.89989 -0.29436  0.00534  0.28853  2.13926 
+
+# Coefficients:
+                 Estimate Std. Error t value Pr(>|t|)    
+ (Intercept)    -0.026881   0.012957  -2.075   0.0381 *  
+ log1p(commits)  0.653828   0.003499 186.836   <2e-16 ***
+ log1p(churn)    0.035609   0.002793  12.749   <2e-16 ***
+ ---
+ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# Residual standard error: 0.4779 on 6666 degrees of freedom
+ Multiple R-squared:  0.9176,	Adjusted R-squared:  0.9176 
+ F-statistic: 3.711e+04 on 2 and 6666 DF,  p-value: < 2.2e-16
+
+
+Other lm results: ( cfd ~ b + ch )
+----------------------------------
+Call:
+lm(formula = cfd ~ b + ch, data = data_cfd)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1973.24    -7.84    -4.76     5.57  1060.54 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 7.305e+00  4.207e+00   1.737   0.0828 .  
+b           2.804e-01  3.360e-03  83.453  < 2e-16 ***
+ch          5.765e-04  7.778e-05   7.412 2.81e-13 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 124.1 on 922 degrees of freedom
+Multiple R-squared:  0.9464,	Adjusted R-squared:  0.9463 
+F-statistic:  8140 on 2 and 922 DF,  p-value: < 2.2e-16
+
+Other lm results: ( log1p(b) ~ log1p(ch) )
+------------------------------------------
+Call:
+lm(formula = log1p(b) ~ log1p(ch), data = data_bugs)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-4.8017 -0.5466  0.0028  0.5793  3.8458 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.519967   0.030033  -17.31   <2e-16 ***
+log1p(ch)    0.525626   0.004599  114.29   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.9545 on 6267 degrees of freedom
+Multiple R-squared:  0.6758,	Adjusted R-squared:  0.6757 
+F-statistic: 1.306e+04 on 1 and 6267 DF,  p-value: < 2.2e-16
+
+===Kolmogrov-Smirnov===
+
+# Kolmogrov-Smirnov result between two sets of peack daily churns, one from the last two weeks of the development period and another from the entire six weeks development period.
+## SQL: reports/ks/ks.sql
+## Formula: ks.test(data$entire_six_weeks, data$last_two_weeks, alternative = "l", exact=FALSE) 
+
+* 6x2 ~ 6 weeks development period vs last 2 weeks of that
+* 6x3 ~ 6 weeks development period vs last 3 weeks of that
+{| class="wikitable"
+| Release	|| p-val (6x2)	|| p-val (6x3)	|| D^- (6x2) 	|| D^- (6x3)	|| Bugs
+|-
+| 06.0		|| 0.001662	|| 0.007447	|| 0.8		|| 0.4		|| 3476
+|-
+| 07.0		|| 0.4066	|| 1		|| 0.3		|| 0.7		|| 2117
+|-
+| 09.0		|| 0.001662	|| 0.007447	|| 0.8		|| 0.7		|| 1431
+|-
+| 10.0		|| 0.02732	|| 0.2019	|| 0.6		|| 0.4		|| 1570
+|-
+| 11.0		|| 0.007447	|| 0.08208	|| 0.7		|| 0.5		|| 1682
+|-
+| 12.0		|| 0.007447	|| 0.02732	|| 0.7		|| 0.6		|| 1659
+|-
+| 13.0		|| 0.007447	|| 0.08208	|| 0.7		|| 0.5		|| 1592
+|-
+| 14.0		|| 0.02732	|| 0.02732	|| 0.6		|| 0.6		|| 2284
+|-
+| 15.0		|| 0.02732	|| 0.2019	|| 0.6		|| 0.4		|| 2057
+|-
+| 16.0		|| 0.02732	|| 0.08208	|| 0.6		|| 0.5		|| 2147
+|-
+| 17.0		|| 0.02732	|| 0.6703	|| 0.6		|| 0.2		|| 2888
+|-
+| 18.0		|| 0.02732	|| 0.08208	|| 0.6		|| 0.5		|| 3061
+|-
+| 19.0		|| 0.4066	|| 0.4066	|| 0.3		|| 0.3		|| 4524
+|-
+| 20.0		|| 0.007447	|| 0.4066	|| 0.7		|| 0.3		|| 2882
+|-
+| 21.0		|| 0.08208	|| 0.2019	|| 0.5		|| 0.4		|| 3309
+|-
+| 22.0		|| 0.007447	|| 0.08208	|| 0.7		|| 0.5		|| 3715
+|-
+| 23.0		|| 0.02732	|| 0.2019	|| 0.6		|| 0.4		|| 3746
+|-
+| 24.0		|| 0.2019	|| 0.4066	|| 0.4		|| 0.3		|| 3619
+|-
+| 25.0		|| 0.007447	|| 0.02732	|| 0.7		|| 0.6		|| 4709
+|-
+| 26.0		|| 0.02732	|| 0.02732	|| 0.6		|| 0.6		|| 4388
+|-
+| 27.0		|| 0.007447	|| 0.4066	|| 0.7		|| 0.3		|| 4696
+|-
+| 28.0		|| 0.2019	|| 0.6703	|| 0.4		|| 0.2		|| 4461
+|-
+| 29.0		|| 0.007447	|| 0.08208	|| 0.7		|| 0.5		|| 6171
+|-
+| 30.0		|| 0.08208	|| 0.08208	|| 0.5		|| 0.5		|| 4747
+|-
+| 31.0		|| 0.007447	|| 0.02732	|| 0.7		|| 0.6		|| 4445
+|-
+| 32.0		|| 0.08208	|| 0.2019	|| 0.5		|| 0.4		|| 4195
+|-
+| 33.0		|| 0.2019	|| 0.2019	|| 0.4		|| 0.4		|| 4707
+|-
+| 34.0		|| 0.001662	|| 0.007447	|| 0.8		|| 0.7		|| 6092
+|}
+
+# Data:
+select b.ch as dp_ch, a.ch as sp_ch from ( select date(author_date) as a_date, substring(cr.release from E'^\\d+\\.\\d+'),sum(add+remove) as ch from git_commit_release cr, git_revision r where cr.commit=r.commit and date(author_date) > date(stab_start_date) group by a_date, substring(cr.release from E'^\\d+\\.\\d+') order by a_date ) a, ( select date(author_date) as a_date, substring(cr.release from E'^\\d+\\.\\d+'),sum(add+remove) as ch from git_commit_release cr, git_revision r where cr.commit=r.commit and date(author_date) <= date(stab_start_date) group by a_date, substring(cr.release from E'^\\d+\\.\\d+') order by a_date ) b where a.ch > 10000 and b.ch > 10000 and a.a_date=b.a_date;
+
+[kolmogrov_smirnov.rpt]
+
+	**Welch Two Sample t-test**
+
+ data:  ks_dp and ks_sp
+ t = 4.8661, df = 121.89, p-value = 1.722e-06
+ alternative hypothesis: true difference in means is greater than 0
+ 95 percent confidence interval:
+ 4026465     Inf
+ sample estimates:
+ mean of x mean of y 
+ 6280062.2  173704.3
+
+	**Wilcoxon rank sum test with continuity correction**
+
+ data:  ks_dp and ks_sp
+ W = 14428, p-value < 2.2e-16
+ alternative hypothesis: true location shift is greater than 0
+
+	**Two-sample Kolmogorov-Smirnov test**
+
+ data:  ks_dp and ks_sp
+ D^- = 0.8934, p-value < 2.2e-16
+ alternative hypothesis: the CDF of x lies below that of y
+
+===Kolmogrov-Smirnov First 4 weeks vs last 2 weeks===
+# rush_period_weekly.sql
+# ks_4x2.r
+
+If we consider top 20% pick churn:
+
+	Two-sample Kolmogorov-Smirnov test
+
+ data:  norm and rush
+ D = 0.3824, p-value = 0.06591
+ alternative hypothesis: two-sided
+
+But if we consider top 10% churn picks:
+
+	Two-sample Kolmogorov-Smirnov test
+
+ data:  norm and rush
+ D = 0.2222, p-value = 0.8524
+ alternative hypothesis: two-sided
+
+For Linux:
+If we consider top 10% pick churn
+
+	Two-sample Kolmogorov-Smirnov test
+
+ data:  dev$sum and mw$sum
+ D = 0.3913, p-value = 0.06268
+ alternative hypothesis: two-sided
+
+
+===Revert Commits===
+
+* Total revert commits: 648
+  select count(*) from git_commit gc where gc.log ~ '[R|r]evert\s*\d+';
+
+* Total revert commits during stabilization: 87 (13.4% of the total revert commits, 0.22% of the total commits made in stabilization)
+  select count(*) from git_commit gc, sp_commits spc where gc.commit=spc.commit and gc.log ~ '[R|r]evert\s*\d+';
+
+* Total revert commits during development: 509 (78.5% of the total revert commits, 0.29% of the total commits made in development)
+  select count(*) from git_commit gc, dp_commits dpc where gc.commit=dpc.commit and gc.log ~ '[R|r]evert\s*\d+';
+
+* Per release: 19.5 revert commits in median case
+
+select substring(gcr.release from E'(\\d+\\.\\d+)') as release, count(*) from git_commit gc, git_commit_release gcr where gc.commit=gcr.commit and gc.log ~ '[R|r]evert\s*\d+' group by substring(gcr.release from E'(\\d+\\.\\d+)') order by release;
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   3.00   10.25   19.50   19.90   30.00   52.00 
+
+* Per release in stablization period: 3 revert commits in median case
+select substring(gcr.release from E'(\\d+\\.\\d+)') as release, count(*) from git_commit gc, git_commit_release gcr, sp_commits spc where gc.commit=gcr.commit and gc.commit=spc.commit and gc.log ~ '[R|r]evert\s*\d+' group by substring(gcr.release from E'(\\d+\\.\\d+)') order by release;
+
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   1.00    2.00    3.00    3.48    4.00   14.00
+
+
+===Normal Development vs Rushed Development===
+
+Get the normal development commits (first 4 weeks):
+
+select dcd.release, dcd.total_commit from daily_commit_dp dcd, stable_releases sr where dcd.release=sr.release and dcd.release='5.0' and dcd.commit_date between sr.start_date and (sr.stab_start_date-interval '15' day) and dcd.total_commit > 0 order by commit_date;
+
+Get the rushed development commits (last 2 weeks):
+
+select dcd.release, dcd.total_commit from daily_commit_dp dcd, stable_releases sr where dcd.release=sr.release and dcd.release='5.0' and dcd.commit_date between (sr.stab_start_date-interval '15' day) and sr.release_date and dcd.total_commit > 0 order by commit_date;
+
+Run perl script to do the above sqls for all 30 releases [rush_development_ito_commits.pl]
+
+
+select substring(gcr.release from E'(linuxv[0-9]\\.[0-9]{1,2}\\.?[0-9]*)') as release, count(*) from git_commit gc, git_commit_release gcr where gc.commit=gcr.commit and (gc.log ~ '[R|r]evert\s*\d+' or gc.subject ~ '[R|r]evert\s*\d+') group by substring(gcr.release from E'(linuxv[0-9]\\.[0-9]{1,2}\\.?[0-9]*)') order by release;
+
