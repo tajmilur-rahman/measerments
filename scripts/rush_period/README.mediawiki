@@ -1,0 +1,12 @@
+==Kolmogrov-Smirnov Test==
+
+
+Run the following scripts:
+# rush_period_weekly.sql
+# ks_4x2.r
+
+SQL file will generate two .rpt files into /tmp directory.
+.r file will use those rpt files
+
+Before running the .r file please remove header underline and the record-count from the bottom.
+

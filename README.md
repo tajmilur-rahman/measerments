@@ -4,7 +4,7 @@
 
 Work Title: Release stabilization on Linux and Chrome
 
-==Extract Data from Git==
+===Extract Data from Git===
 
 # Create a config file in internal_tools/git_extract/config/
 # Run internal_tools/git_extract/git_extract.sql
@@ -12,7 +12,7 @@ Work Title: Release stabilization on Linux and Chrome
 # Run internal_tools/git_extract/git_path.pl
 # Run internal_tools/git_extract/git_paths_canonical.pl
 
-==PROCESS DEVELOPMENT DATA==
+===PROCESS DEVELOPMENT DATA===
 
 # Get rid off the big commits made by bots for non-development purpose
 # Get rid off the non-development commits, commits made for non-source files

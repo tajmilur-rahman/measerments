@@ -1,0 +1,15 @@
+norm <- read.table('/tmp/first_four_weeks_churns_weekly.rpt', sep = '|', header = T)
+rush <- read.table('/tmp/last_two_weeks_churns_weekly.rpt', sep = '|', header = T)
+
+quantile(norm$churn, .8)
+norm <- norm[norm$churn >= 254820.8,]
+quantile(norm$churn, .8)
+
+quantile(rush$churn, .8)
+rush <- rush[rush$churn >= 281585.9,]
+summary(norm$churn)
+summary(rush$churn)
+wilcox(norm$churn, rush$churn)
+wilcox.test(norm$churn, rush$churn)
+ks.test(norm$churn, rush$churn)
+
