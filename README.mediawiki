@@ -5,8 +5,12 @@ We've released our git extraction and release engineering mining scripts. If you
 ==Dependencies==
 
 We usually run this on Ubuntu server, you'll need the following packages:
+ sudo apt-get install install postgresql postgresql-contrib
 
-sudo apt-get install install postgresql postgresql-contrib
+To execute perl scripts you will need:
+ sudo apt-get install perl
+
+You have to write the name of the database in the scripts/config file
 
 ===Extract Data from Git===
 
@@ -30,11 +34,41 @@ To extract your Git data into a postgres database for additional release enginee
 # Create table stable_releases, store the stable release dates:
 ## scripts/stable_releases.sql
 # Set stable release durations in stable_releases table
+## Set start_date and end_date for each stable releases:
+   update stable_releases set start_date = st_dt from (select min(date) st_dt from git_refs_tags where path~E'^32.0') a where release~E'^32.0';
+   update stable_releases set end_date = en_dt from (select max(date) en_dt from git_refs_tags where path~E'^5.0') a where release~E'^5.0';
+   These sqls should be executed for every release
+
 # Create table git_commit_release
 ## scripts/git_commit_release.sql
 # Run git DAG to traverse the git tree to collect commits targetting to a release. This will store commits corresponding to a particular release into git_commit_release table.
 ## Set the correct database name in the config file
 ## Run the command: "perl scripts/git_dag.pl scripts/config" in terminal
+## From git_commit_release we get all the commits made for a particular stable release using the following sql:
+   select * from git_commit_release where release in (select path from git_refs_tags where path~'^MAJOR.MINOR' order by date) order by author_date;
+   MAJOR.MINOR is for example: 5.0 or 6.0 ... 34.0
+## The releases that we don't have commit information for are removed from stable_releases. 0.2.149, 0.3.154, 0.4.154, 1.0.154, 2.0.172, 3.0.195 are removed. 3.0.195, 36.* and 37.* releases didn't have complete records in git_refs_tags table so we have removed them from git_refs_tags table as well as git_commit_release
+
+# Developers information:
+## Create table dp_commits where only development commits will be stored.
+## Create table sp_commits where only qa and stabilization commits will be stored.
+## Create table daily_churn_dp and daily_churn_sp to store daily churn and number files for each release.
+## Create table dev_area_dp and dev_area_sp.
+## Populate dev_area_dp and dev_area_sp with author, release, canonical (file path), commit, churn. Primary key should be author, release, path together. 
 # Lag/Transit time information:
+## Populate stab_start_date in git_commit_release
+## Populate stable_release_date in git_commit_release
+## Deduct author_date from stab_start_date to get the dp lag for dp commits
+## Deduct author_date from stable_release_date to get the sp lag for sp commits
+
+# Core developers: Following scripts will be helpful for calculating the cumulative contribution of developers to understand core developers (making more than 80% churns)
+## cumul_contribution_sp.sql
+## cumul_contribution_dp.sql
+## cumulative_contribution_sp.pl
+## cumulative_contribution_dp.pl
+
+# Rush period:
+## rush_period.sql
+## rush_period_weekly.sql
 
 
