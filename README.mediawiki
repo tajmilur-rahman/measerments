@@ -62,13 +62,13 @@ To extract your Git data into a postgres database for additional release enginee
 ## Deduct author_date from stable_release_date to get the sp lag for sp commits
 
 # Core developers: Following scripts will be helpful for calculating the cumulative contribution of developers to understand core developers (making more than 80% churns)
-## cumul_contribution_sp.sql
-## cumul_contribution_dp.sql
-## cumulative_contribution_sp.pl
-## cumulative_contribution_dp.pl
+## scripts/cumul_contribution_sp.sql
+## scripts/cumul_contribution_dp.sql
+## scripts/cumulative_contribution_sp.pl
+## scripts/cumulative_contribution_dp.pl
 
 # Rush period:
-## rush_period.sql
-## rush_period_weekly.sql
+## scripts/rush_period/rush_period.sql
+## scripts/rush_period/rush_period_weekly.sql
 
 
